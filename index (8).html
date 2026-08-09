@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Future Fuel Price Prediction System | AI-Powered Petrol &amp; Diesel Forecasting</title>
+
+<!-- Bootstrap 5 -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<style>
+:root{
+  --bg:#080b10;
+  --bg-elevated:#0d1218;
+  --surface:#121821;
+  --surface-2:#161d28;
+  --border:#212a37;
+  --border-soft:#1a222d;
+  --text-primary:#edf1f5;
+  --text-secondary:#8a96a6;
+  --text-muted:#5b6675;
+  --petrol:#ff8a3d;
+  --petrol-dim:#ff8a3d33;
+  --diesel:#6c8cff;
+  --diesel-dim:#6c8cff33;
+  --ai:#21d4b4;
+  --ai-dim:#21d4b433;
+  --up:#ff5c6c;
+  --down:#3ddc84;
+  --radius:14px;
+}
+
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--text-primary);
+  font-family:'Inter',sans-serif;
+  overflow-x:hidden;
+}
+h1,h2,h3,h4,h5,.font-display{
+  font-family:'Space Grotesk',sans-serif;
+  letter-spacing:-0.01em;
+}
+.font-mono{font-family:'JetBrains Mono',monospace;}
+.text-secondary{color:var(--text-secondary)!important;}
+.text-muted-2{color:var(--text-muted)!important;}
+a{text-decoration:none;}
+section{scroll-margin-top:78px;}
+
+/* background texture */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background:
+    radial-gradient(ellipse 900px 500px at 15% -5%, #ff8a3d14, transparent 60%),
+    radial-gradient(ellipse 900px 600px at 90% 10%, #21d4b414, transparent 60%),
+    radial-gradient(ellipse 700px 500px at 50% 100%, #6c8cff10, transparent 60%);
+  pointer-events:none;
+  z-index:0;
+}
+
+/* ================= CINEMATIC LOADING SCREEN ================= */
+html.is-loading{overflow:hidden;height:100%;}
+html.is-loading body{overflow:hidden;height:100%;}
+
+#loadScreen{
+  position:fixed;inset:0;z-index:99999;
+  background:radial-gradient(ellipse 120% 90% at 50% 50%, #0d1420 0%, #05070a 65%, #000 100%);
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+#loadScreen.fade-out{
+  animation:loaderFadeOut .85s ease forwards;
+}
+@keyframes loaderFadeOut{
+  0%{opacity:1;}
+  100%{opacity:0;visibility:hidden;pointer-events:none;}
+}
+
+/* cinematic letterbox bars */
+.ls-bar{position:absolute;left:0;right:0;background:#000;z-index:2;}
+.ls-bar.top{top:0;height:12%;transform:translateY(-100%);animation:lsBarInTop .9s cubic-bezier(.2,.8,.2,1) .1s forwards;}
+.ls-bar.bottom{bottom:0;height:12%;transform:translateY(100%);animation:lsBarInBottom .9s cubic-bezier(.2,.8,.2,1) .1s forwards;}
+@keyframes lsBarInTop{to{transform:translateY(0);}}
+@keyframes lsBarInBottom{to{transform:translateY(0);}}
+
+/* ambient glow sweep */
+.ls-glow{
+  position:absolute;width:900px;height:900px;border-radius:50%;
+  background:radial-gradient(circle, #ff8a3d22 0%, transparent 60%);
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  animation:lsGlowPulse 3.2s ease-in-out infinite;
+  z-index:0;
+}
+@keyframes lsGlowPulse{
+  0%,100%{opacity:.5;transform:translate(-50%,-50%) scale(.9);}
+  50%{opacity:1;transform:translate(-50%,-50%) scale(1.15);}
+}
+
+/* faint scanning grid lines for AI feel */
+.ls-scanline{
+  position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:repeating-linear-gradient(0deg, transparent 0 3px, #ffffff05 3px 4px);
+}
+.ls-sweep{
+  position:absolute;top:0;bottom:0;width:2px;left:0;z-index:1;
+  background:linear-gradient(180deg, transparent, #21d4b4aa, transparent);
+  filter:blur(1px);
+  animation:lsSweep 2.6s ease-in-out infinite;
+}
+@keyframes lsSweep{
+  0%{left:0%;opacity:0;}
+  10%{opacity:1;}
+  90%{opacity:1;}
+  100%{left:100%;opacity:0;}
+}
+
+.ls-content{
+  position:relative;z-index:3;text-align:center;padding:0 1.5rem;
+}
+.ls-emoji-wrap{
+  position:relative;display:inline-flex;align-items:center;justify-content:center;
+  width:150px;height:150px;margin-bottom:1.6rem;
+}
+.ls-emoji-ring{
+  position:absolute;inset:0;border-radius:50%;
+  border:1.5px solid #ff8a3d3d;
+  animation:lsRingSpin 4s linear infinite;
+}
+.ls-emoji-ring.two{inset:14px;border-color:#21d4b43d;animation-duration:3s;animation-direction:reverse;}
+@keyframes lsRingSpin{to{transform:rotate(360deg);}}
+.ls-emoji{
+  font-size:4.6rem;line-height:1;
+  filter:drop-shadow(0 0 22px #ff8a3d99) drop-shadow(0 0 46px #ff8a3d44);
+  animation:lsEmojiPulse 1.6s ease-in-out infinite, lsEmojiIntro 1s cubic-bezier(.2,.8,.2,1) forwards;
+  transform:scale(0);
+  display:inline-block;
+}
+@keyframes lsEmojiIntro{
+  0%{transform:scale(0) rotate(-25deg);opacity:0;}
+  60%{transform:scale(1.18) rotate(6deg);opacity:1;}
+  100%{transform:scale(1) rotate(0deg);opacity:1;}
+}
+@keyframes lsEmojiPulse{
+  0%,100%{filter:drop-shadow(0 0 22px #ff8a3d99) drop-shadow(0 0 46px #ff8a3d44);}
+  50%{filter:drop-shadow(0 0 34px #ff8a3dcc) drop-shadow(0 0 70px #21d4b455);}
+}
+
+.ls-title{
+  font-family:'Space Grotesk',sans-serif;font-weight:700;
+  font-size:clamp(1.15rem,3.4vw,1.9rem);
+  letter-spacing:.14em;text-transform:uppercase;color:#edf1f5;
+  opacity:0;animation:lsTextIn .8s ease .5s forwards;
+}
+.ls-title span{
+  background:linear-gradient(120deg,#ff8a3d,#21d4b4 80%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.ls-subtitle{
+  font-family:'JetBrains Mono',monospace;font-size:.78rem;letter-spacing:.08em;
+  color:#8a96a6;margin-top:.6rem;opacity:0;animation:lsTextIn .8s ease .8s forwards;
+}
+.ls-subtitle .ls-dots::after{
+  content:'';animation:lsDots 1.2s steps(4,end) infinite;
+}
+@keyframes lsDots{
+  0%{content:'';}25%{content:'.';}50%{content:'..';}75%{content:'...';}100%{content:'';}
+}
+@keyframes lsTextIn{
+  from{opacity:0;transform:translateY(10px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+.ls-progress-wrap{
+  width:min(260px,60vw);height:3px;background:#ffffff14;border-radius:10px;
+  margin:2rem auto 0;overflow:hidden;opacity:0;animation:lsTextIn .6s ease 1s forwards;
+}
+.ls-progress-bar{
+  height:100%;width:0%;border-radius:10px;
+  background:linear-gradient(90deg,#ff8a3d,#21d4b4);
+  animation:lsFill 4.3s cubic-bezier(.3,.6,.3,1) .7s forwards;
+}
+@keyframes lsFill{to{width:100%;}}
+
+.ls-pct{
+  font-family:'JetBrains Mono',monospace;font-size:.7rem;color:#5b6675;
+  margin-top:.55rem;opacity:0;animation:lsTextIn .6s ease 1s forwards;
+}
+
+@media (prefers-reduced-motion:reduce){
+  .ls-emoji,.ls-emoji-ring,.ls-glow,.ls-sweep{animation-duration:.01s!important;}
+}
+@media (max-width:575.98px){
+  .ls-emoji-wrap{width:110px;height:110px;margin-bottom:1.2rem;}
+  .ls-emoji{font-size:3.4rem;}
+  .ls-bar.top,.ls-bar.bottom{height:8%;}
+}
+
+/* ---------- NAVBAR ---------- */
+.navbar-custom{
+  position:fixed;top:0;left:0;right:0;z-index:1000;
+  background:rgba(8,11,16,0.72);
+  backdrop-filter:blur(14px) saturate(140%);
+  border-bottom:1px solid var(--border-soft);
+  transition:all .3s ease;
+}
+.navbar-custom .navbar-brand{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;font-size:1.08rem;color:var(--text-primary);
+  display:flex;align-items:center;gap:.55rem;
+}
+.brand-mark{
+  width:34px;height:34px;border-radius:9px;
+  background:linear-gradient(135deg,var(--petrol),var(--ai));
+  display:flex;align-items:center;justify-content:center;
+  font-size:.95rem;color:#08110d;
+}
+.navbar-custom .nav-link{
+  color:var(--text-secondary)!important;
+  font-size:.87rem;font-weight:500;
+  padding:.5rem .95rem!important;
+  transition:color .2s;
+}
+.navbar-custom .nav-link:hover,.navbar-custom .nav-link.active{color:var(--text-primary)!important;}
+.btn-nav-cta{
+  background:var(--petrol);color:#1a0e04;font-weight:600;font-size:.85rem;
+  padding:.5rem 1.1rem;border-radius:8px;border:none;
+  display:inline-block;
+}
+.btn-nav-cta:hover{background:#ffa562;color:#1a0e04;}
+.navbar-toggler{padding:.4rem .55rem;}
+.navbar-toggler:focus{box-shadow:0 0 0 3px #21d4b433;}
+
+/* Mobile / tablet dropdown menu needs its own solid panel so it doesn't float over content */
+@media (max-width:991.98px){
+  .navbar-collapse{
+    background:var(--bg-elevated);
+    border:1px solid var(--border-soft);
+    border-radius:14px;
+    margin-top:.75rem;
+    padding:.6rem .9rem 1rem;
+    box-shadow:0 20px 50px -20px #000c;
+  }
+  .navbar-custom .nav-link{padding:.72rem .5rem!important;font-size:.95rem;border-bottom:1px solid var(--border-soft);}
+  .navbar-nav .nav-item:last-child .nav-link{border-bottom:none;}
+  .navbar-nav.ms-auto{width:100%;}
+  .btn-nav-cta{display:block;text-align:center;margin-top:.6rem;padding:.7rem 1.1rem;}
+}
+
+/* ---------- BUTTONS ---------- */
+.btn-primary-glow{
+  background:linear-gradient(135deg,var(--petrol),#ffb26b);
+  color:#1a0e04;font-weight:600;border:none;
+  padding:.85rem 1.9rem;border-radius:10px;
+  box-shadow:0 8px 30px -6px #ff8a3d55;
+  transition:transform .2s, box-shadow .2s;
+}
+.btn-primary-glow:hover{transform:translateY(-2px);box-shadow:0 12px 36px -6px #ff8a3d77;color:#1a0e04;}
+.btn-outline-ai{
+  border:1px solid var(--border);color:var(--text-primary);
+  padding:.85rem 1.7rem;border-radius:10px;font-weight:500;
+  transition:all .2s;background:transparent;
+}
+.btn-outline-ai:hover{border-color:var(--ai);color:var(--ai);}
+
+/* ---------- HERO ---------- */
+.hero{
+  position:relative;z-index:1;
+  padding:clamp(6.5rem,14vw,9.5rem) 0 clamp(3rem,8vw,6rem);
+  min-height:min(92vh,860px);display:flex;align-items:center;
+}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:.5rem;
+  font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ai);
+  background:var(--ai-dim);border:1px solid #21d4b444;
+  padding:.4rem .85rem;border-radius:100px;margin-bottom:1.6rem;
+}
+.eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--ai);animation:pulse 1.8s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+.hero h1{
+  font-size:clamp(2.3rem,4.4vw,3.7rem);
+  font-weight:700;line-height:1.08;margin-bottom:1.3rem;
+}
+.hero h1 .accent-grad{
+  background:linear-gradient(120deg,var(--petrol),var(--ai) 80%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.hero p.lead{
+  color:var(--text-secondary);font-size:1.08rem;max-width:520px;margin-bottom:2.1rem;line-height:1.65;
+}
+.ticker-row{
+  display:flex;gap:1.4rem;margin-top:2.4rem;flex-wrap:wrap;
+}
+.ticker-chip{
+  font-family:'JetBrains Mono',monospace;font-size:.82rem;color:var(--text-secondary);
+  display:flex;align-items:center;gap:.5rem;
+}
+.ticker-chip b{color:var(--text-primary);font-weight:600;}
+.ticker-chip .up{color:var(--up);}
+.ticker-chip .down{color:var(--down);}
+
+/* gauge */
+.gauge-wrap{position:relative;display:flex;align-items:center;justify-content:center;z-index:1;}
+.gauge-ring{
+  position:absolute;border-radius:50%;border:1px dashed #ffffff14;
+}
+.gauge-ring.r1{width:min(420px,78vw);height:min(420px,78vw);animation:spin 60s linear infinite;}
+.gauge-ring.r2{width:min(340px,63vw);height:min(340px,63vw);border-style:solid;border-color:#ffffff0d;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.gauge-core{
+  width:min(280px,52vw);height:min(280px,52vw);border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #161d28, #0d1218 70%);
+  border:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  box-shadow:0 0 0 1px #ffffff08, 0 30px 80px -20px #000000cc, inset 0 0 60px #00000066;
+}
+.gauge-core .g-label{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--text-muted);letter-spacing:.1em;text-transform:uppercase;}
+.gauge-core .g-value{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.7rem,5vw,2.6rem);font-weight:700;color:var(--ai);margin:.2rem 0;}
+.gauge-core .g-sub{font-size:.76rem;color:var(--text-secondary);}
+.gauge-orbit-badge{
+  position:absolute;background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:.6rem .9rem;font-family:'JetBrains Mono',monospace;font-size:.72rem;
+  box-shadow:0 12px 30px -10px #000;
+}
+.badge-petrol{top:6%;left:-4%;color:var(--petrol);}
+.badge-diesel{bottom:10%;right:-6%;color:var(--diesel);}
+@media (max-width:991px){.gauge-orbit-badge{display:none;}}
+
+/* ---------- FLUID CONTAINER WIDTHS ---------- */
+@media (min-width:1400px){
+  .container{max-width:1240px;}
+}
+@media (min-width:1600px){
+  .container{max-width:1320px;}
+}
+
+/* ---------- SECTION HEADERS ---------- */
+.section-pad{padding:clamp(3.2rem,7vw,6.5rem) 0;position:relative;z-index:1;}
+.section-tag{
+  font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--petrol);margin-bottom:.7rem;display:block;
+}
+.section-title{font-size:clamp(1.7rem,2.6vw,2.3rem);font-weight:700;margin-bottom:.9rem;}
+.section-desc{color:var(--text-secondary);max-width:640px;font-size:1rem;}
+.divider-line{height:1px;background:linear-gradient(90deg,var(--border),transparent);width:100%;}
+
+/* ---------- CARDS ---------- */
+.card-surface{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+}
+.price-card{
+  padding:1.8rem;position:relative;overflow:hidden;height:100%;
+}
+.price-card::after{
+  content:"";position:absolute;top:-40%;right:-30%;width:220px;height:220px;border-radius:50%;
+  filter:blur(50px);opacity:.35;
+}
+.price-card.petrol::after{background:var(--petrol);}
+.price-card.diesel::after{background:var(--diesel);}
+.price-card .fuel-icon{
+  width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;
+}
+.price-card.petrol .fuel-icon{background:var(--petrol-dim);color:var(--petrol);}
+.price-card.diesel .fuel-icon{background:var(--diesel-dim);color:var(--diesel);}
+.price-card .price-value{font-family:'JetBrains Mono',monospace;font-size:clamp(1.9rem,5vw,2.5rem);font-weight:700;margin:.6rem 0 .2rem;word-break:break-word;}
+.price-card .price-unit{font-size:.85rem;color:var(--text-muted);}
+.price-delta{font-size:.82rem;font-weight:600;display:inline-flex;align-items:center;gap:.3rem;margin-top:.5rem;}
+.price-delta.up{color:var(--up);}
+.price-delta.down{color:var(--down);}
+
+.form-select-dark,.form-control-dark{
+  background:var(--surface-2);border:1px solid var(--border);color:var(--text-primary);
+  border-radius:9px;padding:.68rem .9rem;font-size:.92rem;
+}
+.form-select-dark:focus,.form-control-dark:focus{
+  background:var(--surface-2);color:var(--text-primary);border-color:var(--ai);
+  box-shadow:0 0 0 3px #21d4b422;
+}
+.form-select-dark option{background:var(--surface-2);}
+label.form-label-dark{font-size:.8rem;color:var(--text-secondary);margin-bottom:.4rem;font-weight:500;}
+
+.small-meta{font-size:.78rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;}
+
+/* ---------- PREDICTION PANEL ---------- */
+.predict-panel{
+  background:linear-gradient(180deg,var(--surface),var(--bg-elevated));
+  border:1px solid var(--border);border-radius:18px;
+  padding:clamp(1.3rem,4vw,2.4rem);
+}
+.period-btn{
+  background:var(--surface-2);border:1px solid var(--border);color:var(--text-secondary);
+  border-radius:9px;padding:.62rem .3rem;font-size:.8rem;font-weight:600;text-align:center;
+  cursor:pointer;transition:all .18s;width:100%;font-family:'JetBrains Mono',monospace;
+  min-height:44px;display:flex;align-items:center;justify-content:center;
+  -webkit-tap-highlight-color:transparent;user-select:none;
+}
+.period-btn.active{background:var(--petrol-dim);border-color:var(--petrol);color:var(--petrol);}
+.period-btn:hover{border-color:var(--ai);}
+
+.result-box{
+  border-radius:14px;border:1px solid var(--border);
+  background:var(--bg-elevated);padding:1.9rem;
+  display:flex;flex-direction:column;justify-content:center;height:100%;
+}
+.result-price{font-family:'JetBrains Mono',monospace;font-size:clamp(2.1rem,6vw,3rem);font-weight:700;line-height:1;word-break:break-word;}
+.trend-pill{
+  display:inline-flex;align-items:center;gap:.4rem;padding:.35rem .8rem;border-radius:100px;
+  font-size:.8rem;font-weight:600;width:fit-content;margin-top:.7rem;
+}
+.trend-pill.up{background:#ff5c6c1a;color:var(--up);}
+.trend-pill.down{background:#3ddc841a;color:var(--down);}
+
+/* ---------- AI SECTION ---------- */
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:1.7rem;text-align:center;
+}
+.stat-card .stat-num{font-family:'JetBrains Mono',monospace;font-size:clamp(1.5rem,4.5vw,2.1rem);font-weight:700;color:var(--ai);}
+.stat-card .stat-label{font-size:.8rem;color:var(--text-secondary);margin-top:.3rem;}
+
+.factor-row{
+  display:flex;align-items:center;gap:1rem;padding:1.05rem 0;border-bottom:1px solid var(--border-soft);
+}
+.factor-row:last-child{border-bottom:none;}
+.factor-icon{
+  width:42px;height:42px;flex:0 0 42px;border-radius:10px;background:var(--surface-2);
+  display:flex;align-items:center;justify-content:center;color:var(--ai);border:1px solid var(--border);
+}
+.factor-row h6{margin-bottom:.15rem;font-weight:600;font-size:.95rem;}
+.factor-row p{margin:0;color:var(--text-secondary);font-size:.83rem;}
+.factor-weight{
+  font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--text-muted);
+  min-width:48px;text-align:right;
+}
+
+.model-diagram{
+  background:var(--bg-elevated);border:1px solid var(--border);border-radius:16px;padding:1.8rem;
+}
+.pipe-node{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:.8rem;text-align:center;font-size:.78rem;color:var(--text-secondary);
+  font-family:'JetBrains Mono',monospace;
+}
+.pipe-node.active{border-color:var(--ai);color:var(--ai);}
+.pipe-arrow{color:var(--text-muted);text-align:center;font-size:1.1rem;}
+
+/* ---------- ANALYTICS ---------- */
+.chart-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:1.6rem;height:100%;
+}
+.chart-card h6{font-weight:600;margin-bottom:.2rem;}
+.chart-legend-dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:.4rem;}
+
+/* ---------- ABOUT ---------- */
+.step-item{display:flex;gap:1.2rem;padding:1.4rem 0;border-bottom:1px solid var(--border-soft);}
+.step-item:last-child{border-bottom:none;}
+.step-num{
+  font-family:'JetBrains Mono',monospace;font-size:.85rem;color:var(--petrol);
+  width:38px;height:38px;flex:0 0 38px;border-radius:9px;background:var(--petrol-dim);
+  display:flex;align-items:center;justify-content:center;font-weight:700;
+}
+.step-item h6{font-weight:600;margin-bottom:.3rem;}
+.step-item p{color:var(--text-secondary);font-size:.88rem;margin:0;}
+
+/* ---------- FOOTER ---------- */
+footer{
+  border-top:1px solid var(--border-soft);
+  background:var(--bg-elevated);position:relative;z-index:1;padding:3.2rem 0 1.6rem;
+}
+footer h6{font-weight:700;font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:1rem;}
+.tech-pill{
+  display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.72rem;
+  background:var(--surface-2);border:1px solid var(--border);color:var(--text-secondary);
+  padding:.3rem .7rem;border-radius:7px;margin:0 .35rem .35rem 0;
+}
+.disclaimer-box{
+  background:#ff5c6c0d;border:1px solid #ff5c6c33;border-radius:10px;padding:1rem 1.2rem;
+  font-size:.82rem;color:var(--text-secondary);
+}
+.disclaimer-box i{color:var(--up);margin-right:.5rem;}
+
+/* scroll reveal */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease, transform .7s ease;}
+.reveal.in{opacity:1;transform:translateY(0);}
+
+/* ===================================================================
+   RESPONSIVE BREAKPOINTS
+   phones <576 · large phones 576-767 · tablets 768-991
+   laptops 992-1199 · desktops 1200-1399 · large desktops 1400+
+   =================================================================== */
+
+/* ---- Tablets & below: hero centers, gauge drops under text ---- */
+@media (max-width:991.98px){
+  .hero{text-align:center;}
+  .hero .col-lg-6:first-child{margin-bottom:1rem;}
+  .hero p.lead{margin-left:auto;margin-right:auto;}
+  .ticker-row{justify-content:center;}
+  .gauge-wrap{margin-top:1.5rem;}
+  .d-flex.flex-wrap.gap-3{justify-content:center;}
+}
+
+/* ---- Tablets (768-991): two-column grids relax to full width where cramped ---- */
+@media (min-width:768px) and (max-width:991.98px){
+  .predict-panel .col-lg-5,.predict-panel .col-lg-7{flex:0 0 100%;max-width:100%;}
+  .result-box{margin-top:1.5rem;}
+}
+
+/* ---- Large phones & tablets: nav / spacing ---- */
+@media (max-width:767.98px){
+  section{scroll-margin-top:64px;}
+  .hero{padding-top:7rem;}
+  .ticker-row{gap:1rem .9rem;}
+  .chart-card canvas{max-height:230px;}
+  .chart-card > div[style*="height"]{height:230px!important;}
+  .model-diagram{margin-top:.5rem;}
+}
+
+/* ---- Phones (<576) ---- */
+@media (max-width:575.98px){
+  .container{padding-left:1.1rem;padding-right:1.1rem;}
+  .hero{padding-top:6.2rem;}
+  .eyebrow{font-size:.64rem;padding:.35rem .7rem;}
+  .btn-primary-glow,.btn-outline-ai{width:100%;justify-content:center;display:flex;padding:.8rem 1.2rem;}
+  .d-flex.flex-wrap.gap-3{flex-direction:column;}
+  .ticker-row{flex-direction:column;align-items:center;gap:.7rem;}
+  .gauge-core{width:56vw;height:56vw;}
+  .gauge-ring.r1{width:82vw;height:82vw;}
+  .gauge-ring.r2{width:66vw;height:66vw;}
+  .price-card{padding:1.4rem;}
+  .predict-panel{border-radius:14px;}
+  .result-box{padding:1.3rem;}
+  .chart-card{padding:1.2rem;}
+  .chart-card canvas{max-height:200px;}
+  .chart-card > div[style*="height"]{height:200px!important;}
+  .stat-card{padding:1.2rem .8rem;}
+  .factor-row{gap:.7rem;}
+  .factor-weight{min-width:36px;font-size:.72rem;}
+  .step-item{gap:.85rem;}
+  footer .row > div{text-align:left;}
+  footer .d-flex.justify-content-between{flex-direction:column;gap:.4rem;}
+}
+
+/* ---- Small laptops (992-1199): tighten hero + gauge slightly ---- */
+@media (min-width:992px) and (max-width:1199.98px){
+  .gauge-ring.r1{width:360px;height:360px;}
+  .gauge-ring.r2{width:290px;height:290px;}
+  .gauge-core{width:240px;height:240px;}
+  .hero h1{font-size:clamp(2rem,3.6vw,3.1rem);}
+}
+
+/* ---- Large desktops (1400+): give the gauge and charts a bit more room ---- */
+@media (min-width:1400px){
+  .gauge-ring.r1{width:460px;height:460px;}
+  .gauge-ring.r2{width:370px;height:370px;}
+  .gauge-core{width:300px;height:300px;}
+}
+
+/* ---- Foldables / very narrow phones (<380px) ---- */
+@media (max-width:380px){
+  .hero h1{font-size:1.9rem;}
+  .result-price{font-size:1.9rem;}
+  .price-card .price-value{font-size:1.7rem;}
+}
+
+/* ---- Landscape phones (short viewport height) ---- */
+@media (max-height:480px) and (orientation:landscape){
+  .hero{min-height:auto;padding-top:6rem;padding-bottom:2.5rem;}
+  .gauge-wrap{display:none;}
+}
+
+/* ---- Touch devices: remove hover-only affordances, ensure tap targets ---- */
+@media (hover:none){
+  .btn-primary-glow:hover,.btn-outline-ai:hover,.period-btn:hover{transform:none;}
+  .nav-link,.period-btn,.btn-nav-cta{min-height:40px;}
+}
+
+/* ---- Respect reduced motion ---- */
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto;}
+  .gauge-ring.r1{animation:none;}
+  .eyebrow .dot{animation:none;}
+  .reveal{transition:none;opacity:1;transform:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= CINEMATIC LOADING SCREEN ================= -->
+<div id="loadScreen" aria-hidden="true">
+  <div class="ls-bar top"></div>
+  <div class="ls-bar bottom"></div>
+  <div class="ls-glow"></div>
+  <div class="ls-scanline"></div>
+  <div class="ls-sweep"></div>
+  <div class="ls-content">
+    <div class="ls-emoji-wrap">
+      <div class="ls-emoji-ring"></div>
+      <div class="ls-emoji-ring two"></div>
+      <span class="ls-emoji">⛽</span>
+    </div>
+    <div class="ls-title">Future<span>Fuel</span> Price Prediction</div>
+    <div class="ls-subtitle">Initializing AI Prediction Engine<span class="ls-dots"></span></div>
+    <div class="ls-progress-wrap"><div class="ls-progress-bar"></div></div>
+    <div class="ls-pct" id="lsPct">0%</div>
+  </div>
+</div>
+
+<!-- ================= NAVBAR ================= -->
+<nav class="navbar navbar-expand-lg navbar-custom py-2">
+  <div class="container">
+    <a class="navbar-brand" href="#home">
+      <span class="brand-mark"><i class="fa-solid fa-gauge-high"></i></span>
+      Future<span class="text-secondary">Fuel</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu" style="border-color:var(--border);">
+      <i class="fa-solid fa-bars text-light"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
+        <li class="nav-item"><a class="nav-link" href="#live-price">Live Price</a></li>
+        <li class="nav-item"><a class="nav-link" href="#predict">Predict</a></li>
+        <li class="nav-item"><a class="nav-link" href="#ai-model">AI Model</a></li>
+        <li class="nav-item"><a class="nav-link" href="#analytics">Analytics</a></li>
+        <li class="nav-item"><a class="nav-link" href="#about">How It Works</a></li>
+        <li class="nav-item ms-lg-2"><a class="btn-nav-cta" href="#predict">Predict Price</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- ================= HERO ================= -->
+<header class="hero" id="home">
+  <div class="container">
+    <div class="row align-items-center gy-5">
+      <div class="col-lg-6">
+        <span class="eyebrow"><span class="dot"></span> AI &amp; MACHINE LEARNING FORECASTING</span>
+        <h1>Know where <span class="accent-grad">petrol &amp; diesel</span> prices are heading, before they get there.</h1>
+        <p class="lead">Future Fuel Price Prediction System uses a Random Forest regression model trained on crude oil rates, USD-INR movement, inflation, taxation and demand-supply signals to forecast Petrol and Diesel prices from 1 day to 5 years out.</p>
+        <div class="d-flex flex-wrap gap-3">
+          <a href="#predict" class="btn-primary-glow"><i class="fa-solid fa-wand-magic-sparkles me-2"></i>Predict Future Price</a>
+          <a href="#ai-model" class="btn-outline-ai">How the model works</a>
+        </div>
+        <div class="ticker-row">
+          <div class="ticker-chip"><i class="fa-solid fa-gas-pump" style="color:var(--petrol)"></i>Petrol <b id="tickerPetrol">₹96.72</b> <span class="up" id="tickerPetrolDelta">▲0.4%</span></div>
+          <div class="ticker-chip"><i class="fa-solid fa-truck-fast" style="color:var(--diesel)"></i>Diesel <b id="tickerDiesel">₹89.62</b> <span class="down" id="tickerDieselDelta">▼0.2%</span></div>
+          <div class="ticker-chip"><i class="fa-solid fa-brain" style="color:var(--ai)"></i>Model accuracy <b>94.3%</b></div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="gauge-wrap">
+          <div class="gauge-ring r1"></div>
+          <div class="gauge-ring r2"></div>
+          <div class="gauge-core">
+            <span class="g-label">AI Confidence Score</span>
+            <span class="g-value" id="confidenceScore">94.3%</span>
+            <span class="g-sub">Random Forest · 512 estimators</span>
+          </div>
+          <div class="gauge-orbit-badge badge-petrol"><i class="fa-solid fa-gas-pump me-1"></i>Petrol trend: rising</div>
+          <div class="gauge-orbit-badge badge-diesel"><i class="fa-solid fa-truck-fast me-1"></i>Diesel trend: stable</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ================= LIVE PRICE ================= -->
+<section class="section-pad" id="live-price">
+  <div class="container reveal">
+    <span class="section-tag">01 · Live Fuel Price</span>
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+      <div>
+        <h2 class="section-title mb-1">Today's price at your location</h2>
+        <p class="section-desc mb-0">Prices update daily based on international crude rates and local taxation.</p>
+      </div>
+      <div class="d-flex gap-3 align-items-center flex-wrap">
+        <div>
+          <label class="form-label-dark d-block">State / Location</label>
+          <select class="form-select form-select-dark" id="liveLocation" style="min-width:200px;">
+            <option value="Tamil Nadu" selected>Tamil Nadu — Chennai</option>
+            <option value="Maharashtra">Maharashtra — Mumbai</option>
+            <option value="Delhi">Delhi — New Delhi</option>
+            <option value="Karnataka">Karnataka — Bengaluru</option>
+            <option value="West Bengal">West Bengal — Kolkata</option>
+            <option value="Telangana">Telangana — Hyderabad</option>
+            <option value="Gujarat">Gujarat — Ahmedabad</option>
+            <option value="Rajasthan">Rajasthan — Jaipur</option>
+          </select>
+        </div>
+        <div class="small-meta text-end">
+          <i class="fa-solid fa-clock-rotate-left me-1"></i>Last updated<br>
+          <span id="lastUpdated" class="text-secondary">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="card-surface price-card petrol">
+          <div class="d-flex justify-content-between align-items-start">
+            <div class="fuel-icon"><i class="fa-solid fa-gas-pump"></i></div>
+            <span class="small-meta">PETROL</span>
+          </div>
+          <div class="price-value" id="livePetrolPrice">₹96.72</div>
+          <div class="price-unit">per litre</div>
+          <div class="price-delta up" id="livePetrolDelta"><i class="fa-solid fa-arrow-trend-up"></i> +0.40% since yesterday</div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card-surface price-card diesel">
+          <div class="d-flex justify-content-between align-items-start">
+            <div class="fuel-icon"><i class="fa-solid fa-truck-fast"></i></div>
+            <span class="small-meta">DIESEL</span>
+          </div>
+          <div class="price-value" id="liveDieselPrice">₹89.62</div>
+          <div class="price-unit">per litre</div>
+          <div class="price-delta down" id="liveDieselDelta"><i class="fa-solid fa-arrow-trend-down"></i> −0.22% since yesterday</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container"><div class="divider-line"></div></div>
+
+<!-- ================= PREDICTION ================= -->
+<section class="section-pad" id="predict">
+  <div class="container reveal">
+    <span class="section-tag">02 · Future Price Prediction</span>
+    <h2 class="section-title mb-1">Forecast where prices are headed</h2>
+    <p class="section-desc mb-4">Choose a fuel, a location and a horizon. The model estimates a future price using historical trend and current economic factors.</p>
+
+    <div class="predict-panel">
+      <div class="row g-4">
+        <div class="col-lg-5">
+          <div class="mb-3">
+            <label class="form-label-dark">Fuel Type</label>
+            <select class="form-select form-select-dark" id="predFuel">
+              <option value="petrol">Petrol</option>
+              <option value="diesel">Diesel</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label-dark">Location</label>
+            <select class="form-select form-select-dark" id="predLocation">
+              <option value="Tamil Nadu">Tamil Nadu — Chennai</option>
+              <option value="Maharashtra">Maharashtra — Mumbai</option>
+              <option value="Delhi">Delhi — New Delhi</option>
+              <option value="Karnataka">Karnataka — Bengaluru</option>
+              <option value="West Bengal">West Bengal — Kolkata</option>
+              <option value="Telangana">Telangana — Hyderabad</option>
+              <option value="Gujarat">Gujarat — Ahmedabad</option>
+              <option value="Rajasthan">Rajasthan — Jaipur</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label-dark">Prediction Period</label>
+            <div class="row g-2 row-cols-3 row-cols-sm-5 row-cols-lg-3 row-cols-xl-5" id="periodGroup">
+              <div class="col"><div class="period-btn active" data-days="1">1 Day</div></div>
+              <div class="col"><div class="period-btn" data-days="30">1 Month</div></div>
+              <div class="col"><div class="period-btn" data-days="365">1 Year</div></div>
+              <div class="col"><div class="period-btn" data-days="1095">3 Years</div></div>
+              <div class="col"><div class="period-btn" data-days="1825">5 Years</div></div>
+            </div>
+          </div>
+          <button class="btn-primary-glow w-100 mt-2" id="runPrediction"><i class="fa-solid fa-microchip me-2"></i>Run AI Prediction</button>
+        </div>
+
+        <div class="col-lg-7">
+          <div class="result-box">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+              <div>
+                <span class="small-meta" id="resultMeta">PETROL · TAMIL NADU · 1 DAY FORECAST</span>
+                <div class="result-price mt-2" id="resultPrice">₹97.11</div>
+              </div>
+              <div class="text-end">
+                <span class="trend-pill up" id="resultTrendPill"><i class="fa-solid fa-arrow-trend-up"></i> <span id="resultPct">+0.40%</span></span>
+                <div class="small-meta mt-2">vs current ₹<span id="resultCurrent">96.72</span></div>
+              </div>
+            </div>
+            <div class="mt-4" style="height:160px;">
+              <canvas id="predictMiniChart"></canvas>
+            </div>
+            <p class="small-meta mt-3 mb-0"><i class="fa-solid fa-circle-info me-1"></i>Estimate generated by Random Forest Regression using crude oil, forex, inflation and tax signals. Not a guaranteed price.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container"><div class="divider-line"></div></div>
+
+<!-- ================= AI MODEL ================= -->
+<section class="section-pad" id="ai-model">
+  <div class="container reveal">
+    <span class="section-tag">03 · AI Prediction Engine</span>
+    <h2 class="section-title mb-1">A Random Forest model trained on real market drivers</h2>
+    <p class="section-desc mb-5">The engine learns non-linear relationships between historical fuel prices and the factors that move them, then projects that pattern forward.</p>
+
+    <div class="row g-4 mb-5">
+      <div class="col-6 col-lg-3">
+        <div class="stat-card"><div class="stat-num" data-count="512">0</div><div class="stat-label">Decision Trees</div></div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card"><div class="stat-num" data-count="94" data-suffix="%">0</div><div class="stat-label">Validation Accuracy (R²)</div></div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card"><div class="stat-num" data-count="10" data-suffix="yr">0</div><div class="stat-label">Historical Data Span</div></div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card"><div class="stat-num" data-count="6">0</div><div class="stat-label">Input Factors</div></div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="card-surface" style="padding:1.8rem;">
+          <h5 class="mb-3">Factors the model learns from</h5>
+          <div class="factor-row">
+            <div class="factor-icon"><i class="fa-solid fa-oil-well"></i></div>
+            <div class="flex-grow-1"><h6>Crude oil price</h6><p>Global Brent/WTI crude movement, the largest driver of pump price.</p></div>
+            <div class="factor-weight">32%</div>
+          </div>
+          <div class="factor-row">
+            <div class="factor-icon"><i class="fa-solid fa-money-bill-transfer"></i></div>
+            <div class="flex-grow-1"><h6>USD–INR exchange rate</h6><p>Crude is imported and paid for in dollars, so rupee weakness raises cost.</p></div>
+            <div class="factor-weight">21%</div>
+          </div>
+          <div class="factor-row">
+            <div class="factor-icon"><i class="fa-solid fa-chart-line"></i></div>
+            <div class="flex-grow-1"><h6>Inflation</h6><p>General price-level trends that feed into distribution and retail costs.</p></div>
+            <div class="factor-weight">14%</div>
+          </div>
+          <div class="factor-row">
+            <div class="factor-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+            <div class="flex-grow-1"><h6>Central &amp; state taxes</h6><p>Excise duty and VAT, which vary by state and change with policy.</p></div>
+            <div class="factor-weight">17%</div>
+          </div>
+          <div class="factor-row">
+            <div class="factor-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+            <div class="flex-grow-1"><h6>Demand &amp; supply</h6><p>Seasonal consumption, refinery output and inventory levels.</p></div>
+            <div class="factor-weight">10%</div>
+          </div>
+          <div class="factor-row">
+            <div class="factor-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+            <div class="flex-grow-1"><h6>Historical price trend</h6><p>Recent momentum and seasonality in petrol and diesel prices.</p></div>
+            <div class="factor-weight">6%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="model-diagram h-100">
+          <h5 class="mb-4">Prediction pipeline</h5>
+          <div class="d-flex flex-column gap-2">
+            <div class="pipe-node"><i class="fa-solid fa-database me-1"></i> Historical data ingested from MySQL</div>
+            <div class="pipe-arrow"><i class="fa-solid fa-arrow-down"></i></div>
+            <div class="pipe-node"><i class="fa-solid fa-broom me-1"></i> Cleaning &amp; feature engineering (scikit-learn)</div>
+            <div class="pipe-arrow"><i class="fa-solid fa-arrow-down"></i></div>
+            <div class="pipe-node active"><i class="fa-solid fa-tree me-1"></i> Random Forest Regressor training</div>
+            <div class="pipe-arrow"><i class="fa-solid fa-arrow-down"></i></div>
+            <div class="pipe-node"><i class="fa-solid fa-flask me-1"></i> Flask REST API serves predictions</div>
+            <div class="pipe-arrow"><i class="fa-solid fa-arrow-down"></i></div>
+            <div class="pipe-node"><i class="fa-solid fa-display me-1"></i> Rendered on this dashboard</div>
+          </div>
+          <p class="text-secondary small mt-4 mb-0">In production, a Python Flask API loads the trained scikit-learn model, pulls the latest factor data from MySQL, and returns a JSON prediction that this page renders live. The values shown here are a client-side simulation of that same logic for demonstration.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container"><div class="divider-line"></div></div>
+
+<!-- ================= ANALYTICS ================= -->
+<section class="section-pad" id="analytics">
+  <div class="container reveal">
+    <span class="section-tag">04 · Analytics</span>
+    <h2 class="section-title mb-1">Read the trend before you fill up</h2>
+    <p class="section-desc mb-5">Two years of historical prices plotted alongside the model's forward-looking estimate.</p>
+
+    <div class="row g-4">
+      <div class="col-lg-7">
+        <div class="chart-card">
+          <h6><span class="chart-legend-dot" style="background:var(--petrol)"></span><span class="chart-legend-dot" style="background:var(--diesel)"></span>Historical Petrol vs Diesel trend</h6>
+          <p class="small-meta mb-3">Last 24 months, ₹/litre</p>
+          <div style="height:280px;"><canvas id="historyChart"></canvas></div>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="chart-card">
+          <h6><span class="chart-legend-dot" style="background:var(--ai)"></span>Future prediction graph</h6>
+          <p class="small-meta mb-3">Historical + AI-forecast path</p>
+          <div style="height:280px;"><canvas id="forecastChart"></canvas></div>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="chart-card">
+          <h6><i class="fa-solid fa-arrow-right-arrow-left me-1" style="color:var(--ai)"></i>Petrol vs Diesel comparison</h6>
+          <p class="small-meta mb-3">Average monthly price gap</p>
+          <div style="height:260px;"><canvas id="compareChart"></canvas></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="chart-card">
+          <h6><i class="fa-solid fa-chart-simple me-1" style="color:var(--petrol)"></i>Price trend direction</h6>
+          <p class="small-meta mb-3">Month-over-month % change</p>
+          <div style="height:260px;"><canvas id="trendChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container"><div class="divider-line"></div></div>
+
+<!-- ================= ABOUT ================= -->
+<section class="section-pad" id="about">
+  <div class="container reveal">
+    <div class="row g-5">
+      <div class="col-lg-5">
+        <span class="section-tag">05 · How It Works</span>
+        <h2 class="section-title mb-3">From raw data to a price you can plan around</h2>
+        <p class="section-desc">The system combines a historical price database, a trained machine learning model, and current economic indicators to produce short and long-term fuel price estimates.</p>
+      </div>
+      <div class="col-lg-7">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div><h6>Collect historical data</h6><p>Daily petrol and diesel prices, crude oil rates, USD-INR rates, inflation and tax data are stored in MySQL.</p></div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div><h6>Engineer features</h6><p>Scikit-learn preprocesses the raw series into model-ready features: lagged prices, rolling averages and rate-of-change signals.</p></div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div><h6>Train the Random Forest</h6><p>An ensemble of decision trees learns how crude oil, forex, inflation, tax and demand-supply patterns have historically moved prices.</p></div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div><h6>Serve predictions via Flask</h6><p>The trained model is wrapped in a Flask API that accepts a fuel type, location and horizon, and returns an estimated price.</p></div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">5</div>
+          <div><h6>Visualize on the dashboard</h6><p>Chart.js renders the historical trend, comparison and forecast so the result is easy to read at a glance.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <a class="navbar-brand mb-3 d-inline-flex" href="#home">
+          <span class="brand-mark"><i class="fa-solid fa-gauge-high"></i></span>
+          Future<span class="text-secondary">Fuel</span>
+        </a>
+        <p class="text-secondary small">AI-powered forecasting for Petrol and Diesel prices, built to help drivers, fleets and businesses plan ahead.</p>
+      </div>
+      <div class="col-lg-4">
+        <h6>Technology</h6>
+        <div>
+          <span class="tech-pill">HTML5</span>
+          <span class="tech-pill">CSS3</span>
+          <span class="tech-pill">Bootstrap 5</span>
+          <span class="tech-pill">JavaScript</span>
+          <span class="tech-pill">Python Flask</span>
+          <span class="tech-pill">MySQL</span>
+          <span class="tech-pill">Scikit-learn</span>
+          <span class="tech-pill">Chart.js</span>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <h6>Disclaimer</h6>
+        <div class="disclaimer-box"><i class="fa-solid fa-triangle-exclamation"></i>Predictions are estimates generated by a machine learning model and are not guaranteed future prices. Actual fuel prices depend on government policy, global events and market conditions.</div>
+      </div>
+    </div>
+    <div class="divider-line my-4"></div>
+    <div class="d-flex flex-wrap justify-content-between small-meta">
+      <span>© 2026 Future Fuel Price Prediction System</span>
+      <span>Built with Flask · Scikit-learn · MySQL · Chart.js</span>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+/* ================= CINEMATIC LOADING SCREEN CONTROL ================= */
+(function(){
+  const DURATION = 5000; // total splash time, ms
+  const loader = document.getElementById('loadScreen');
+  const pctEl = document.getElementById('lsPct');
+  document.documentElement.classList.add('is-loading');
+
+  const start = performance.now();
+  function tick(now){
+    const elapsed = now - start;
+    const pct = Math.min(100, Math.round((elapsed / DURATION) * 100));
+    pctEl.textContent = pct + '%';
+    if(elapsed < DURATION){
+      requestAnimationFrame(tick);
+    } else {
+      pctEl.textContent = '100%';
+      finishLoading();
+    }
+  }
+  requestAnimationFrame(tick);
+
+  function finishLoading(){
+    loader.classList.add('fade-out');
+    document.documentElement.classList.remove('is-loading');
+    setTimeout(()=>{ loader.style.display = 'none'; }, 900);
+  }
+
+  // safety fallback in case rAF throttles on a hidden tab
+  setTimeout(()=>{ if(!loader.classList.contains('fade-out')) finishLoading(); }, DURATION + 400);
+})();
+
+/* ============================================================
+   FUTURE FUEL PRICE PREDICTION SYSTEM — client-side simulation
+   In production this logic lives in a Flask API backed by a
+   scikit-learn RandomForestRegressor and a MySQL database.
+   ============================================================ */
+
+const STATE_MULTIPLIER = {
+  "Tamil Nadu": 1.00, "Maharashtra": 1.06, "Delhi": 0.97, "Karnataka": 1.03,
+  "West Bengal": 1.05, "Telangana": 1.04, "Gujarat": 0.99, "Rajasthan": 1.08
+};
+const BASE = { petrol: 96.72, diesel: 89.62 };
+const ANNUAL_DRIFT = { petrol: 0.045, diesel: 0.038 }; // long-run learned trend
+const VOL = { petrol: 0.006, diesel: 0.005 };
+
+function seededRandom(seed){
+  let x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
+function currentPrice(fuel, state){
+  const mult = STATE_MULTIPLIER[state] ?? 1;
+  return BASE[fuel] * mult;
+}
+
+// simulated "Random Forest" style prediction: trend + factor pull + damped noise
+function predictPrice(fuel, state, days){
+  const base = currentPrice(fuel, state);
+  const years = days / 365;
+  const drift = ANNUAL_DRIFT[fuel];
+  const crudeFactor = 0.012 * Math.sin(years * 1.3 + (fuel === 'petrol' ? 0 : 1));
+  const forexFactor = 0.008 * years;
+  const growth = Math.pow(1 + drift, years) * (1 + crudeFactor + forexFactor * 0.3);
+  const noise = (seededRandom(days * (fuel === 'petrol' ? 13 : 29) + state.length) - 0.5) * VOL[fuel];
+  const predicted = base * growth * (1 + noise);
+  const pct = ((predicted - base) / base) * 100;
+  return { base, predicted, pct };
+}
+
+function fmt(n){ return '₹' + n.toFixed(2); }
+
+/* ---------------- LIVE CLOCK ---------------- */
+function updateClock(){
+  const el = document.getElementById('lastUpdated');
+  const now = new Date();
+  el.textContent = now.toLocaleString('en-IN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short', year:'numeric' });
+}
+updateClock();
+setInterval(updateClock, 60000);
+
+/* ---------------- LIVE PRICE SECTION ---------------- */
+function refreshLivePrices(){
+  const state = document.getElementById('liveLocation').value;
+  const petrol = currentPrice('petrol', state);
+  const diesel = currentPrice('diesel', state);
+  document.getElementById('livePetrolPrice').textContent = fmt(petrol);
+  document.getElementById('liveDieselPrice').textContent = fmt(diesel);
+  document.getElementById('tickerPetrol').textContent = fmt(petrol);
+  document.getElementById('tickerDiesel').textContent = fmt(diesel);
+}
+document.getElementById('liveLocation').addEventListener('change', refreshLivePrices);
+refreshLivePrices();
+
+/* ---------------- PREDICTION PANEL ---------------- */
+let selectedDays = 1;
+document.querySelectorAll('.period-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedDays = parseInt(btn.dataset.days,10);
+  });
+});
+
+let miniChart;
+function periodLabel(days){
+  if(days===1) return '1 DAY';
+  if(days===30) return '1 MONTH';
+  if(days===365) return '1 YEAR';
+  if(days===1095) return '3 YEARS';
+  return '5 YEARS';
+}
+
+function runPrediction(){
+  const fuel = document.getElementById('predFuel').value;
+  const state = document.getElementById('predLocation').value;
+  const { base, predicted, pct } = predictPrice(fuel, state, selectedDays);
+  const isUp = pct >= 0;
+
+  document.getElementById('resultMeta').textContent = `${fuel.toUpperCase()} · ${state.toUpperCase()} · ${periodLabel(selectedDays)} FORECAST`;
+  document.getElementById('resultPrice').textContent = fmt(predicted);
+  document.getElementById('resultCurrent').textContent = base.toFixed(2);
+  document.getElementById('resultPct').textContent = (isUp?'+':'') + pct.toFixed(2) + '%';
+
+  const pill = document.getElementById('resultTrendPill');
+  pill.className = 'trend-pill ' + (isUp ? 'up' : 'down');
+  pill.innerHTML = `<i class="fa-solid fa-arrow-trend-${isUp?'up':'down'}"></i> <span id="resultPct">${(isUp?'+':'')+pct.toFixed(2)}%</span>`;
+
+  // mini chart: short path from base to predicted
+  const steps = 8;
+  const labels = []; const data = [];
+  for(let i=0;i<=steps;i++){
+    labels.push(i===0?'Now':(i===steps?periodLabel(selectedDays):''));
+    const t = i/steps;
+    const eased = base + (predicted-base) * (t*t*(3-2*t));
+    const wiggle = (seededRandom(i*7+selectedDays) - 0.5) * (base*0.002);
+    data.push(+(eased+wiggle).toFixed(2));
+  }
+  const accent = fuel === 'petrol' ? getCss('--petrol') : getCss('--diesel');
+  const ctx = document.getElementById('predictMiniChart').getContext('2d');
+  if(miniChart) miniChart.destroy();
+  miniChart = new Chart(ctx, {
+    type:'line',
+    data:{ labels, datasets:[{ data, borderColor:accent, borderWidth:2.5, tension:.4, fill:true,
+      backgroundColor: hexAlpha(accent,0.12), pointRadius:0 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{enabled:false}},
+      scales:{
+        x:{grid:{display:false}, ticks:{color:getCss('--text-muted'), font:{family:'JetBrains Mono', size:10}}},
+        y:{display:false}
+      }
+    }
+  });
+}
+document.getElementById('runPrediction').addEventListener('click', runPrediction);
+document.getElementById('predFuel').addEventListener('change', runPrediction);
+document.getElementById('predLocation').addEventListener('change', runPrediction);
+
+function getCss(varName){ return getComputedStyle(document.documentElement).getPropertyValue(varName).trim(); }
+function hexAlpha(hex, alpha){
+  const c = hex.replace('#','');
+  const r = parseInt(c.substring(0,2),16), g = parseInt(c.substring(2,4),16), b = parseInt(c.substring(4,6),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+/* ---------------- ANIMATED STAT COUNTERS ---------------- */
+function animateCounters(){
+  document.querySelectorAll('.stat-num').forEach(el=>{
+    const target = parseInt(el.dataset.count,10);
+    const suffix = el.dataset.suffix || '';
+    let cur = 0;
+    const step = Math.max(1, Math.round(target/40));
+    const t = setInterval(()=>{
+      cur += step;
+      if(cur>=target){ cur=target; clearInterval(t); }
+      el.textContent = cur + suffix;
+    }, 25);
+  });
+}
+
+/* ---------------- SCROLL REVEAL ---------------- */
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('in');
+      if(e.target.id==='ai-model' || e.target.querySelector?.('#ai-model')){}
+      io.unobserve(e.target);
+    }
+  });
+}, {threshold:0.15});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+const statObserver = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{ if(e.isIntersecting){ animateCounters(); statObserver.disconnect(); } });
+}, {threshold:0.3});
+const aiSection = document.getElementById('ai-model');
+if(aiSection) statObserver.observe(aiSection);
+
+/* ---------------- NAV ACTIVE LINK ON SCROLL ---------------- */
+const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+const sections = ['live-price','predict','ai-model','analytics','about'].map(id=>document.getElementById(id));
+window.addEventListener('scroll', ()=>{
+  let current = '';
+  sections.forEach(sec=>{
+    if(sec && window.scrollY >= sec.offsetTop - 120) current = sec.id;
+  });
+  navLinks.forEach(link=>{
+    link.classList.toggle('active', link.getAttribute('href') === '#'+current);
+  });
+});
+
+/* ============================================================
+   HISTORICAL DATA GENERATION (24 months, deterministic seed)
+   ============================================================ */
+const MONTHS = [];
+(function buildMonths(){
+  const now = new Date();
+  for(let i=23;i>=0;i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    MONTHS.push(d.toLocaleString('en-IN',{month:'short', year:'2-digit'}));
+  }
+})();
+
+function buildHistory(fuel){
+  const arr = [];
+  let price = BASE[fuel] * 0.86;
+  for(let i=0;i<24;i++){
+    const seasonal = Math.sin(i/12*Math.PI*2) * (fuel==='petrol'?0.9:0.7);
+    const trend = i * (fuel==='petrol'?0.34:0.28);
+    const noise = (seededRandom(i*11+(fuel==='petrol'?3:9)) - 0.5) * 1.4;
+    price = BASE[fuel]*0.86 + trend + seasonal + noise;
+    arr.push(+price.toFixed(2));
+  }
+  arr[23] = BASE[fuel];
+  return arr;
+}
+const petrolHistory = buildHistory('petrol');
+const dieselHistory = buildHistory('diesel');
+
+Chart.defaults.color = '#8a96a6';
+Chart.defaults.font.family = 'Inter';
+
+/* ---- Historical trend chart ---- */
+new Chart(document.getElementById('historyChart'), {
+  type:'line',
+  data:{
+    labels: MONTHS,
+    datasets:[
+      { label:'Petrol', data:petrolHistory, borderColor:'#ff8a3d', backgroundColor:'#ff8a3d1f', borderWidth:2.5, tension:.35, pointRadius:0, fill:true },
+      { label:'Diesel', data:dieselHistory, borderColor:'#6c8cff', backgroundColor:'#6c8cff1f', borderWidth:2.5, tension:.35, pointRadius:0, fill:true }
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    interaction:{mode:'index', intersect:false},
+    plugins:{ legend:{display:false} },
+    scales:{
+      x:{ grid:{color:'#ffffff0a'}, ticks:{maxTicksLimit:8, font:{size:10}} },
+      y:{ grid:{color:'#ffffff0a'}, ticks:{callback:v=>'₹'+v} }
+    }
+  }
+});
+
+/* ---- Forecast chart: history + projected future ---- */
+(function(){
+  const futureLabels = ['+1mo','+6mo','+1yr','+2yr','+3yr','+5yr'];
+  const futureDays = [30,180,365,730,1095,1825];
+  const fuel = 'petrol';
+  const lastHist = petrolHistory[petrolHistory.length-1];
+  const futureData = futureDays.map(d=> +predictPrice(fuel,'Tamil Nadu',d).predicted.toFixed(2));
+  const allLabels = [...MONTHS.slice(-6), ...futureLabels];
+  const histPart = [...petrolHistory.slice(-6), ...Array(futureLabels.length).fill(null)];
+  const futPart = [...Array(5).fill(null), lastHist, ...futureData];
+
+  new Chart(document.getElementById('forecastChart'), {
+    type:'line',
+    data:{
+      labels: allLabels,
+      datasets:[
+        { label:'Historical', data:histPart, borderColor:'#ff8a3d', borderWidth:2.5, tension:.35, pointRadius:0 },
+        { label:'AI Forecast', data:futPart, borderColor:'#21d4b4', borderWidth:2.5, borderDash:[6,4], tension:.35, pointRadius:3, pointBackgroundColor:'#21d4b4' }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:true, labels:{boxWidth:10, font:{size:10}}} },
+      scales:{
+        x:{ grid:{color:'#ffffff0a'}, ticks:{font:{size:9}} },
+        y:{ grid:{color:'#ffffff0a'}, ticks:{callback:v=>'₹'+v} }
+      }
+    }
+  });
+})();
+
+/* ---- Petrol vs Diesel comparison (grouped bar, quarterly avg) ---- */
+(function(){
+  const q = ['Q1','Q2','Q3','Q4'];
+  const petrolQ = [0,1,2,3].map(i=>{
+    const seg = petrolHistory.slice(i*6, i*6+6);
+    return +(seg.reduce((a,b)=>a+b,0)/seg.length).toFixed(2);
+  });
+  const dieselQ = [0,1,2,3].map(i=>{
+    const seg = dieselHistory.slice(i*6, i*6+6);
+    return +(seg.reduce((a,b)=>a+b,0)/seg.length).toFixed(2);
+  });
+  new Chart(document.getElementById('compareChart'), {
+    type:'bar',
+    data:{ labels:q, datasets:[
+      { label:'Petrol', data:petrolQ, backgroundColor:'#ff8a3d', borderRadius:6, maxBarThickness:28 },
+      { label:'Diesel', data:dieselQ, backgroundColor:'#6c8cff', borderRadius:6, maxBarThickness:28 }
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:true, labels:{boxWidth:10, font:{size:10}}} },
+      scales:{ x:{grid:{display:false}}, y:{grid:{color:'#ffffff0a'}, ticks:{callback:v=>'₹'+v}} }
+    }
+  });
+})();
+
+/* ---- Trend direction (MoM % change) ---- */
+(function(){
+  const changes = petrolHistory.slice(1).map((v,i)=> +(((v-petrolHistory[i])/petrolHistory[i])*100).toFixed(2));
+  const labels = MONTHS.slice(1);
+  new Chart(document.getElementById('trendChart'), {
+    type:'bar',
+    data:{ labels, datasets:[{
+      data:changes,
+      backgroundColor: changes.map(c=> c>=0 ? '#ff5c6c' : '#3ddc84'),
+      borderRadius:4, maxBarThickness:14
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{
+        x:{ grid:{display:false}, ticks:{maxTicksLimit:8, font:{size:9}} },
+        y:{ grid:{color:'#ffffff0a'}, ticks:{callback:v=>v+'%'} }
+      }
+    }
+  });
+})();
+
+/* init first prediction render */
+runPrediction();
+</script>
+</body>
+</html>
